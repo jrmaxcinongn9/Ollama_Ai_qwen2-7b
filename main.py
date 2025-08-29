@@ -39,11 +39,11 @@ SYSTEM_EN = (
 )
 
 SYSTEM_AUTO = (
-    "You are a Thai/English text analysis system. Detect whether the input is Thai or English. "
+     "You are a multilingual text analysis system. Detect the language automatically. "
     "Reply with ONE JSON object only: "
     "{\"summary\":\"...\",\"category\":\"general|complaint|request|other\","
-    "\"urgency\":\"low|medium|high\",\"language\":\"th|en\"} "
-    "Rules: (1) Set language to 'th' if the input is Thai, otherwise 'en'; "
+    "\"urgency\":\"low|medium|high\",\"language\":\"xx\"} "
+    "Rules: (1) Set language as ISO 639-1 code (e.g. th, en, ja, zh, fr, de, es); "
     "(2) Write the summary in the same language as the input; "
     "(3) Output only the single JSON, no extra text."
 )
@@ -68,14 +68,14 @@ class ChatResp(BaseModel):
 
 class AnalyzeReq(BaseModel):
     text: str
-    language: Literal["th","en","auto"] = "auto"
+    language: Literal["th", "en", "auto", "multi"] = "auto"
     model: Optional[str] = None
 
 class AnalyzeResult(BaseModel):
     summary: str
     category: Literal["general","complaint","request","other"]
     urgency: Literal["low","medium","high"]
-    language: Literal["th","en"]
+    language: str   # เปลี่ยนจาก Literal เป็น str เพื่อให้รองรับภาษาที่มากกว่า th|en
 
 class AnalyzeResp(BaseModel):
     model: str
@@ -101,7 +101,9 @@ def _pick_system_msg(lang: str) -> str:
         return SYSTEM_THAI
     if lang == "en":
         return SYSTEM_EN
-    return SYSTEM_AUTO  # auto
+    if lang == "multi":
+        return SYSTEM_AUTO
+    return SYSTEM_AUTO
 
 def _analyze_once(text: str, language: str, model: Optional[str]) -> AnalyzeResult:
     # validate language
